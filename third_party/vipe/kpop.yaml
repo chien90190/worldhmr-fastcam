@@ -1,0 +1,44 @@
+defaults:
+  - default
+
+init:
+  camera_type: "pinhole"
+  instance:
+    kf_gap_sec: 0.1
+    phrases:
+      # Humans & Dancers (The primary dynamic noise)
+      - person
+      - dancer
+      - singer
+      - human
+      - clothes
+
+      # Handheld Props (Moving with dancers)
+      - microphone stand
+      - lightstick
+      - umbrella
+      - flag
+      
+      # Broadcast/Video Overlays
+      - lyrics
+      - subtitles
+      - captions
+
+    add_sky: true
+
+slam:
+  keyframe_depth: dav3
+  optimize_intrinsics: ${neq:${..init.intrinsics},"gt"}
+
+  # Connectivity (Jump Prevention)
+  frontend_nms: 2
+  frontend_thresh: 24
+  beta: 0.65
+  
+  # Refinement (Shakiness Prevention)
+  backend_iters: 48
+  visualize: false
+
+
+post:
+  depth_align_model: "mvd_dav3"

@@ -1,0 +1,13 @@
+# Downloaded checkpoints and body models, installed libraries, outputs
+data/
+python_libs/
+results/
+
+# Python
+__pycache__/
+*.egg-info/
+.ipynb_checkpoints
+
+# Editors and OS
+.vscode/
+.DS_Store

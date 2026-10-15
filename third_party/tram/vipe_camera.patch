@@ -1,0 +1,57 @@
+--- a/scripts/estimate_camera.py
++++ b/scripts/estimate_camera.py
+@@ -16,6 +16,8 @@
+ parser.add_argument("--video", type=str, default='./example_video.mov', help='input video')
+ parser.add_argument("--static_camera", action='store_true', help='whether the camera is static')
+ parser.add_argument("--visualize_mask", action='store_true', help='save deva vos for visualization')
++parser.add_argument("--output_dir", type=str, default='results', help='results go to <output_dir>/<video name>')
++parser.add_argument("--vipe_dir", type=str, default=None, help='use the ViPE camera saved here instead of masked DROID-SLAM')
+ args = parser.parse_args()
+ 
+ # File and folders
+@@ -23,7 +25,7 @@
+ root = os.path.dirname(file)
+ seq = os.path.basename(file).split('.')[0]
+ 
+-seq_folder = f'results/{seq}'
++seq_folder = f'{args.output_dir}/{seq}'
+ img_folder = f'{seq_folder}/images'
+ os.makedirs(seq_folder, exist_ok=True)
+ os.makedirs(img_folder, exist_ok=True)
+@@ -43,8 +45,15 @@
+ masks = np.array([masktool.decode(m) for m in masks_])
+ masks = torch.from_numpy(masks)
+ 
+-cam_int, is_static = calibrate_intrinsics(img_folder, masks, is_static=args.static_camera)
+-cam_R, cam_T = run_metric_slam(img_folder, masks=masks, calib=cam_int, is_static=is_static)
++if args.vipe_dir is None:
++    cam_int, is_static = calibrate_intrinsics(img_folder, masks, is_static=args.static_camera)
++    cam_R, cam_T = run_metric_slam(img_folder, masks=masks, calib=cam_int, is_static=is_static)
++else:
++    print('Reading the ViPE camera ...')
++    cam_int = np.load(f'{args.vipe_dir}/intrinsics/{seq}.npz')['data'].mean(axis=0)
++    pred_cam = np.load(f'{args.vipe_dir}/pose/{seq}.npz')['data']
++    cam_R = torch.tensor(pred_cam[:, :3, :3])
++    cam_T = torch.tensor(pred_cam[:, :3, 3])
+ wd_cam_R, wd_cam_T, spec_f = align_cam_to_world(imgfiles[0], cam_R, cam_T)
+ 
+ camera = {'pred_cam_R': cam_R.numpy(), 'pred_cam_T': cam_T.numpy(), 
+--- a/scripts/estimate_humans.py
++++ b/scripts/estimate_humans.py
+@@ -14,6 +14,7 @@
+ parser = argparse.ArgumentParser()
+ parser.add_argument('--video', type=str, default='./example_video.mov', help='input video')
+ parser.add_argument('--max_humans', type=int, default=20, help='maximum number of humans to reconstruct')
++parser.add_argument('--output_dir', type=str, default='results', help='results go to <output_dir>/<video name>')
+ args = parser.parse_args()
+ 
+ # File and folders
+@@ -21,7 +22,7 @@
+ root = os.path.dirname(file)
+ seq = os.path.basename(file).split('.')[0]
+ 
+-seq_folder = f'results/{seq}'
++seq_folder = f'{args.output_dir}/{seq}'
+ img_folder = f'{seq_folder}/images'
+ hps_folder = f'{seq_folder}/hps'
+ os.makedirs(hps_folder, exist_ok=True)

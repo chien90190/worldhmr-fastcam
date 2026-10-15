@@ -1,0 +1,55 @@
+# Input video
+max_height: 896              # frames taller than this are resized
+max_fps: 60                  # higher frame rates are subsampled
+
+# Detection (YOLO11-pose) and tracking (SAM 2.1)
+det_thresh: 0.3              # YOLO detection confidence
+nms_oks_thr: 0.5             # keypoint-similarity NMS between detections
+det_score_thresh: 0.3        # start frame: minimum normalized confidence / quality of a person
+det_height_thresh: 0.3       # start frame: minimum box height, as a fraction of the image height
+believable_min_trunc: 0.05   # start frame, people counted: minimum distance-from-border score
+believable_min_kp_count: 3   #   and visible keypoints
+init_min_kp_count: 5         # start frame, people used as prompts: minimum visible keypoints,
+init_min_kp_score: 0.35      #   keypoint score
+init_min_trunc: 0.10         #   and distance-from-border score
+init_fallback: true          # with no prompt-quality person, prompt the best counted one
+num_max_people: 100          # longest tracks kept
+
+# Camera (odometry, see pipeline/odometry.py)
+odometry: vipe               # vipe; da3 and droid_slam_masked are placeholders
+vipe_pipeline: kpop          # vipe: ViPE pipeline config, see third_party/vipe/kpop.yaml
+vipe_env: vipe               # vipe: conda env that has ViPE installed
+vipe_dir: null               # vipe: ViPE output folder; null = <output_dir>/vipe
+vipe_rerun: false            # vipe: rerun ViPE even if its output exists
+min_cutoff: 0.001            # One Euro smoothing of the camera trajectory
+beta: 0.5
+d_cutoff: 1.0
+
+# HMR backbone
+hmr_type: phmr               # phmr (PromptHMR-Vid) | gvhmr | tram
+gvhmr_dir: null              # gvhmr: path to a GVHMR checkout
+gvhmr_env: gvhmr             # gvhmr: conda env that runs it
+tram_dir: null               # tram: TRAM output folder, holding <video name>/tracks.npy and hps/
+static_conf_dir: null        # contact confidence from this phmr output folder (needed for tram)
+
+# Drift correction
+contact_thr: 0.5             # foot contact probability that counts as planted (also used in PGO)
+win_size: 10                 # frames per window
+cos_thr: 0.8                 # person and camera displacement must be this (anti)parallel
+align_frac: 0.8              # share of the window the foot must stay planted
+rot_err_deg: 0.5             # rotation noise floor; with drift_snr, rejects rotation-dominated windows
+drift_snr: 1.5
+
+# Post-optimization (PGO, physically grounded optimization)
+training_iter: 3000
+postopt_lr: 1e-2             # translations, camera height and initial rotation
+postopt_lr_resid: 5e-2       # drift scale residual and floor raise
+fps: 30                      # time unit of the smoothness terms
+loss_kp_w: 1.5
+loss_smooth_w: 1.0
+loss_cont_vel_w: 5e2
+loss_cont_height_w: 10.0
+loss_below_floor_w: 1e2
+loss_stable_feet_w: 1e2
+loss_repel_w: 10.0
+target_foot_y: 0.08          # height of planted ankles and feet above the floor
